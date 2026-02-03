@@ -1,8 +1,13 @@
 # VirtuaStudio // AOB Engine v2.0
 
+[![GitHub](https://img.shields.io/badge/GitHub-VirtuaStudio-blue?logo=github)](https://github.com/socialawy/VirtuaStudio)
+[![License](https://img.shields.io/badge/License-MIT-green)](LICENSE)
+[![Version](https://img.shields.io/badge/Version-2.0.0-orange)](package.json)
+
 **Status:** Production Ready
 **Version:** 2.0.0
 **Engine:** React + Three.js (r162)
+**Repository:** https://github.com/socialawy/VirtuaStudio
 
 ## Overview
 
@@ -87,20 +92,22 @@ interface SceneModule {
 }
 ```
 ### Available Presets
-- Particles
-SHIMMER: 8000 particles, soft glow
-DUST: 2000 particles, slow drift
-STARS: 500 particles, static
-DENSE_FOG: 15000 particles, atmospheric
-Scenes
-VOID_ABSTRACT: Black void, particles
-DAWN_EXTERIOR: Blue sky, terrain
-NIGHT_INTERIOR: Dark interior, fog
+
+**Particles:**
+- `SHIMMER`: 8000 particles, soft glow
+- `DUST`: 2000 particles, slow drift  
+- `STARS`: 500 particles, static
+- `DENSE_FOG`: 15000 particles, atmospheric
+
+**Scenes:**
+- `VOID_ABSTRACT`: Black void, particles
+- `DAWN_EXTERIOR`: Blue sky, terrain
+- `NIGHT_INTERIOR`: Dark interior, fog
 
 ### Adding a New Module
 #### 1. Create file
 ```bash
-cp modules/_template.tsx modules/my-scene.
+cp modules/_template.tsx modules/my-scene.tsx
 ```
 #### 2. Implement
 ```typescript
