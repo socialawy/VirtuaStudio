@@ -84,11 +84,11 @@ const createParticleSystem = (presetName: keyof typeof PARTICLE_PRESETS) => {
 };
 
 // =============================================================================
-// MODULE DEFINITION (Exact copy from v1.5)
+// MODULE DEFINITION
 // =============================================================================
 
 export const AOBVoidModule: SceneModule = {
-    id: 'AOB_20260201',
+    id: 'AOB_VOID_V1',
     name: 'AOB Production (Seq 01)',
     description: 'Sequence 01 Assets',
     type: 'PRODUCTION',
@@ -225,14 +225,14 @@ export const AOBVoidModule: SceneModule = {
                             positions.push([posArray[i], posArray[i+1], posArray[i+2]]);
                         }
                         engineAPI.saveJSON(job.filename, { 
-                            projectId: 'AOB_20260201',
+                            projectId: 'AOB_VOID_V1',
                             count: positions.length,
                             preset: ctx.activeScenePreset,
                             particles: positions 
                         });
                     } else {
                         engineAPI.saveJSON(job.filename, { 
-                            projectId: 'AOB_20260201', 
+                            projectId: 'AOB_VOID_V1', 
                             generated: new Date().toISOString(),
                             cameraData: ctx.trackingData 
                         });

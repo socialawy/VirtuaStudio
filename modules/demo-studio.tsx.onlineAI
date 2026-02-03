@@ -255,6 +255,8 @@ export const DemoStudioModule: SceneModule = {
   },
 
   UI: ({ ctx, onUpdate, engineAPI }) => {
+    const isOnline = !!process.env.API_KEY && process.env.API_KEY.length > 0;
+
     const generateProp = async () => {
         if (!ctx.params.prompt) return;
         
@@ -308,7 +310,9 @@ export const DemoStudioModule: SceneModule = {
 
     return (
       <div className="module-ui">
-        <div className="panel-header">GENAI STUDIO</div>
+        <div className="panel-header">
+            GENAI STUDIO {isOnline ? '(ONLINE)' : '(OFFLINE)'}
+        </div>
         
         <div className="control-row">
             <label>GENERATE PROP</label>
@@ -322,16 +326,19 @@ export const DemoStudioModule: SceneModule = {
                         padding: '5px',
                         fontSize: '11px',
                         resize: 'none',
-                        fontFamily: 'monospace'
+                        fontFamily: 'monospace',
+                        opacity: isOnline ? 1 : 0.5
                     }}
                     value={ctx.params.prompt}
                     onChange={(e) => { ctx.params.prompt = e.target.value; onUpdate({...ctx}); }}
-                    placeholder="Describe a 3D object..."
+                    placeholder={isOnline ? "Describe a 3D object..." : "API Key Required for GenAI"}
+                    disabled={!isOnline}
                 />
                 <button 
                     className="action-btn"
-                    disabled={ctx.params.isGenerating}
+                    disabled={ctx.params.isGenerating || !isOnline}
                     onClick={generateProp}
+                    style={{opacity: isOnline ? 1 : 0.5}}
                 >
                     {ctx.params.isGenerating ? 'GENERATING CODE...' : 'GENERATE ASSET'}
                 </button>
