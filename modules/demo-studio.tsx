@@ -1,129 +1,187 @@
-// modules/.tsx
+// modules/demo-studio.tsx
 import React, { useEffect, useRef, useState } from 'react';
 import * as THREE from 'three';
 import { SceneModule } from '../core/types';
+import { generateThreeJSScript } from '../core/genai';
+
+// ============================================================================
+// ASSET GENERATORS (The "Crafted" Elements)
+// ============================================================================
+
+const createTree = (x: number, y: number, z: number) => {
+    const group = new THREE.Group();
+    
+    // Trunk
+    const trunkGeom = new THREE.CylinderGeometry(0.2, 0.4, 1.5, 6);
+    const trunkMat = new THREE.MeshStandardMaterial({ color: 0x5c4033, roughness: 0.9 });
+    const trunk = new THREE.Mesh(trunkGeom, trunkMat);
+    trunk.position.y = 0.75;
+    trunk.castShadow = true;
+    trunk.receiveShadow = true;
+    group.add(trunk);
+
+    // Leaves (Low Poly Style)
+    const leafMat = new THREE.MeshStandardMaterial({ color: 0x2d5a27, roughness: 0.8, flatShading: true });
+    
+    const t1 = new THREE.Mesh(new THREE.ConeGeometry(1.5, 1.5, 6), leafMat);
+    t1.position.y = 2.0;
+    t1.castShadow = true;
+    t1.receiveShadow = true;
+    
+    const t2 = new THREE.Mesh(new THREE.ConeGeometry(1.1, 1.5, 6), leafMat);
+    t2.position.y = 2.8;
+    t2.castShadow = true;
+    t2.receiveShadow = true;
+
+    group.add(t1, t2);
+    group.position.set(x, y, z);
+    
+    // Randomize
+    const s = 0.8 + Math.random() * 0.5;
+    group.scale.set(s, s, s);
+    group.rotation.y = Math.random() * Math.PI;
+    
+    return group;
+};
+
+const createCloud = (x: number, y: number, z: number) => {
+    const group = new THREE.Group();
+    const cloudMat = new THREE.MeshStandardMaterial({ 
+        color: 0xffffff, 
+        roughness: 0.1, 
+        flatShading: true,
+        transparent: true,
+        opacity: 0.8
+    });
+
+    const chunks = 3 + Math.floor(Math.random() * 3);
+    for(let i=0; i<chunks; i++) {
+        const mesh = new THREE.Mesh(new THREE.DodecahedronGeometry(2 + Math.random(), 0), cloudMat);
+        mesh.position.set(
+            (Math.random() - 0.5) * 3,
+            (Math.random() - 0.5) * 1,
+            (Math.random() - 0.5) * 2
+        );
+        group.add(mesh);
+    }
+    
+    group.position.set(x, y, z);
+    return group;
+};
+
+// ============================================================================
+// TERRAIN SYSTEM
+// ============================================================================
+
+interface TerrainProvider {
+  getHeight(x: number, z: number): number;
+  mesh: THREE.Mesh;
+}
+
+const createProceduralTerrain = (scene: THREE.Scene): TerrainProvider => {
+  const size = 120;
+  
+  const getHeight = (x: number, z: number) => {
+    return (Math.sin(x / 10) + Math.cos(z / 10)) * 3.0 + (Math.sin(x/3)*0.5);
+  };
+
+  const geometry = new THREE.PlaneGeometry(size, size, 64, 64);
+  geometry.rotateX(-Math.PI / 2);
+  
+  const positions = geometry.attributes.position;
+  for (let i = 0; i < positions.count; i++) {
+    positions.setY(i, getHeight(positions.getX(i), positions.getZ(i)));
+  }
+  geometry.computeVertexNormals();
+
+  const material = new THREE.MeshStandardMaterial({ 
+    color: 0x4a7c38, // Richer green
+    roughness: 0.9, 
+    flatShading: true 
+  });
+  
+  const mesh = new THREE.Mesh(geometry, material);
+  mesh.receiveShadow = true;
+  scene.add(mesh);
+
+  return { getHeight, mesh };
+};
+
+// ============================================================================
+// MODULE DEFINITION
+// ============================================================================
 
 export const DemoStudioModule: SceneModule = {
   id: 'DEMO_STUDIO_V1',
-  name: 'VirtuaStudio Demo',
-  description: 'Animated character, trees, cinematic controls',
+  name: 'VirtuaStudio GenAI Demo',
+  description: 'AI Prop Generation & Cinematic Controls',
   type: 'PLAYGROUND',
-  tags: ['demo', 'character', 'animation', 'cinematic'],
+  tags: ['demo', 'genai', 'character'],
   deliverables: [],
 
   init: (scene, camera) => {
-    // --- Scene Setup ---
+    // --- Environment ---
     scene.background = new THREE.Color(0x87ceeb);
-    scene.fog = new THREE.FogExp2(0x87ceeb, 0.015);
-
+    scene.fog = new THREE.FogExp2(0x87ceeb, 0.012);
     camera.position.set(0, 5, -10);
-    camera.fov = 75;
-    camera.updateProjectionMatrix();
 
     // --- Lighting ---
-    const ambient = new THREE.AmbientLight(0x404040, 0.5);
+    const ambient = new THREE.AmbientLight(0x404040, 0.6);
     scene.add(ambient);
 
-    const sun = new THREE.DirectionalLight(0xffffff, 1.5);
+    const sun = new THREE.DirectionalLight(0xfffaed, 1.8);
     sun.castShadow = true;
-    sun.shadow.mapSize.width = 2048;
-    sun.shadow.mapSize.height = 2048;
-    sun.shadow.camera.near = 0.5;
-    sun.shadow.camera.far = 150;
-    sun.shadow.camera.left = -50;
-    sun.shadow.camera.right = 50;
-    sun.shadow.camera.top = 50;
-    sun.shadow.camera.bottom = -50;
+    sun.shadow.mapSize.set(2048, 2048);
+    sun.shadow.bias = -0.0005;
+    sun.position.set(50, 100, 50);
     scene.add(sun);
 
-    // --- Terrain ---
-    const terrainSize = 120;
-    const getTerrainHeight = (x: number, z: number) => {
-      return (Math.sin(x / 8) + Math.cos(z / 8)) * 2.5;
-    };
+    // --- Systems ---
+    const terrain = createProceduralTerrain(scene);
 
-    const terrainGeom = new THREE.PlaneGeometry(terrainSize, terrainSize, 120, 120);
-    terrainGeom.rotateX(-Math.PI / 2);
-    const positions = terrainGeom.attributes.position;
-    for (let i = 0; i < positions.count; i++) {
-      const x = positions.getX(i);
-      const z = positions.getZ(i);
-      positions.setY(i, getTerrainHeight(x, z));
+    // --- Crafted Assets (Trees & Clouds) ---
+    // Populate the world so it's not empty
+    const envGroup = new THREE.Group();
+    
+    // Trees
+    for(let i=0; i<50; i++) {
+        const angle = Math.random() * Math.PI * 2;
+        const dist = 10 + Math.random() * 45; // Avoid center clearing
+        const x = Math.sin(angle) * dist;
+        const z = Math.cos(angle) * dist;
+        const y = terrain.getHeight(x, z);
+        envGroup.add(createTree(x, y, z));
     }
-    terrainGeom.computeVertexNormals();
 
-    const terrain = new THREE.Mesh(
-      terrainGeom,
-      new THREE.MeshStandardMaterial({ color: 0x558833, roughness: 0.8, flatShading: true })
-    );
-    terrain.receiveShadow = true;
-    scene.add(terrain);
-
-    // --- Grid ---
-    const grid = new THREE.GridHelper(terrainSize, 20, 0x000000, 0x000000);
-    grid.position.y = 0.1;
-    (grid.material as THREE.Material).opacity = 0.1;
-    (grid.material as THREE.Material).transparent = true;
-    scene.add(grid);
+    // Clouds
+    const clouds: THREE.Group[] = [];
+    for(let i=0; i<8; i++) {
+        const c = createCloud(
+            (Math.random() - 0.5) * 100,
+            15 + Math.random() * 10,
+            (Math.random() - 0.5) * 100
+        );
+        clouds.push(c);
+        scene.add(c);
+    }
+    
+    scene.add(envGroup);
 
     // --- Character ---
     const character = new THREE.Group();
     const charMat = new THREE.MeshStandardMaterial({ color: 0xff6347, roughness: 0.4 });
-
-    const createLimb = (w: number, h: number, d: number, x: number, y: number, z: number) => {
-      const mesh = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), charMat);
-      mesh.position.set(x, y, z);
-      mesh.castShadow = true;
-      return mesh;
+    
+    const createBox = (w:number, h:number, d:number, y:number) => {
+       const m = new THREE.Mesh(new THREE.BoxGeometry(w,h,d), charMat);
+       m.position.y = y;
+       m.castShadow = true;
+       return m;
     };
-
-    const head = createLimb(0.6, 0.6, 0.6, 0, 2.3, 0);
-    const torso = createLimb(0.8, 1, 0.4, 0, 1.5, 0);
-    const leftArm = createLimb(0.25, 0.8, 0.25, -0.525, 1.6, 0);
-    const rightArm = createLimb(0.25, 0.8, 0.25, 0.525, 1.6, 0);
-    const leftLeg = createLimb(0.4, 1, 0.4, -0.25, 0.5, 0);
-    const rightLeg = createLimb(0.4, 1, 0.4, 0.25, 0.5, 0);
-
-    // Eyes
-    const eyeMat = new THREE.MeshBasicMaterial({ color: 0x00ffff });
-    const leftEye = new THREE.Mesh(new THREE.BoxGeometry(0.1, 0.1, 0.1), eyeMat);
-    leftEye.position.set(-0.15, 2.35, 0.3);
-    const rightEye = new THREE.Mesh(new THREE.BoxGeometry(0.1, 0.1, 0.1), eyeMat);
-    rightEye.position.set(0.15, 2.35, 0.3);
-
-    character.add(head, torso, leftArm, rightArm, leftLeg, rightLeg, leftEye, rightEye);
+    
+    const head = createBox(0.4, 0.4, 0.4, 1.6);
+    const body = createBox(0.5, 0.7, 0.3, 0.95);
+    character.add(head, body);
     scene.add(character);
-
-    // --- Trees ---
-    const treeTrunkMat = new THREE.MeshStandardMaterial({ color: 0x5c4033 });
-    const treeLeafMat = new THREE.MeshStandardMaterial({ color: 0x228b22 });
-    const treeTrunkGeom = new THREE.CylinderGeometry(0.1, 0.2, 1.5, 6);
-    const treeLeafGeom = new THREE.ConeGeometry(1, 2.5, 6);
-
-    for (let i = 0; i < 40; i++) {
-      const tree = new THREE.Group();
-      const trunk = new THREE.Mesh(treeTrunkGeom, treeTrunkMat);
-      trunk.position.y = 0.75;
-      trunk.castShadow = true;
-      const leaves = new THREE.Mesh(treeLeafGeom, treeLeafMat);
-      leaves.position.y = 2;
-      leaves.castShadow = true;
-      tree.add(trunk, leaves);
-
-      let tx = 0, tz = 0;
-      do {
-        tx = (Math.random() - 0.5) * terrainSize * 0.8;
-        tz = (Math.random() - 0.5) * terrainSize * 0.8;
-      } while (Math.sqrt(tx * tx + tz * tz) < 15);
-
-      const ty = getTerrainHeight(tx, tz);
-      if (ty > -2) {
-        tree.position.set(tx, ty, tz);
-        const scale = 0.8 + Math.random() * 0.4;
-        tree.scale.set(scale, scale, scale);
-        scene.add(tree);
-      }
-    }
 
     return {
       scene,
@@ -131,73 +189,64 @@ export const DemoStudioModule: SceneModule = {
       sun,
       terrain,
       character,
-      leftArm,
-      rightArm,
-      leftLeg,
-      rightLeg,
-      getTerrainHeight,
+      clouds,
+      envGroup,
+      objects: [] as THREE.Object3D[],
       params: {
         isPlaying: true,
         camMode: 'TRACKING' as 'TRACKING' | 'DRONE',
         timeOfDay: 50,
-        aspectRatio: '16:9' as '16:9' | '2.35:1'
+        prompt: 'A stone monolith with glowing runes', // Updated default prompt
+        isGenerating: false,
+        error: null as string | null
       },
       animState: { angle: 0 }
     };
   },
 
   update: (ctx, time, delta) => {
-    const { params, animState, character, leftArm, rightArm, leftLeg, rightLeg, sun, scene, camera } = ctx;
+    const { params, animState, character, terrain, sun, scene, camera, clouds } = ctx;
 
-    // Walk animation
     if (params.isPlaying) {
       animState.angle += 0.01;
-      character.position.y += Math.sin(animState.angle * 10) * 0.02;
-      leftArm.rotation.x = Math.sin(animState.angle * 10) * 0.5;
-      rightArm.rotation.x = -Math.sin(animState.angle * 10) * 0.5;
-      leftLeg.rotation.x = -Math.sin(animState.angle * 10) * 0.5;
-      rightLeg.rotation.x = Math.sin(animState.angle * 10) * 0.5;
+      
+      // Character Walk
+      const radius = 12;
+      const x = Math.sin(animState.angle) * radius;
+      const z = Math.cos(animState.angle) * radius;
+      const y = terrain.getHeight(x, z);
+      
+      character.position.set(x, y, z);
+      character.lookAt(
+        Math.sin(animState.angle + 0.1) * radius,
+        y,
+        Math.cos(animState.angle + 0.1) * radius
+      );
+
+      // Cloud drift
+      clouds.forEach((c: THREE.Group, i: number) => {
+          c.position.x += delta * (1 + i * 0.2);
+          if (c.position.x > 60) c.position.x = -60;
+      });
     }
 
-    // Character path
-    const radius = 20;
-    const x = Math.sin(animState.angle) * radius;
-    const z = Math.cos(animState.angle) * radius;
-    const y = ctx.getTerrainHeight(x, z);
-    character.position.set(x, y, z);
-
-    // Look forward
-    const lookX = Math.sin(animState.angle + 0.1) * radius;
-    const lookZ = Math.cos(animState.angle + 0.1) * radius;
-    character.lookAt(lookX, y, lookZ);
-
-    // Time of day lighting
+    // Time of Day
     const t = params.timeOfDay / 100;
     const sunX = Math.sin((t - 0.5) * Math.PI) * 100;
     const sunY = Math.cos((t - 0.5) * Math.PI) * 100;
     sun.position.set(sunX, sunY, 25);
+    
+    // Sky Color Lerp
+    const isDay = t > 0.2 && t < 0.8;
+    const color = isDay ? 0x87ceeb : 0x0a1a2a;
+    if (scene.background instanceof THREE.Color) scene.background.setHex(color);
+    if (scene.fog) scene.fog.color.setHex(color);
 
-    if (t < 0.2 || t > 0.8) {
-      sun.color.setHSL(0.6, 0.5, 0.2);
-      (scene.background as THREE.Color).setHex(0x0a1a2a);
-      if (scene.fog) scene.fog.color.setHex(0x0a1a2a);
-    } else if (t < 0.3 || t > 0.7) {
-      sun.color.setHSL(0.1, 0.8, 0.6);
-      (scene.background as THREE.Color).setHex(0xffaa55);
-      if (scene.fog) scene.fog.color.setHex(0xffaa55);
-    } else {
-      sun.color.setHSL(0.1, 0.1, 1.0);
-      (scene.background as THREE.Color).setHex(0x87ceeb);
-      if (scene.fog) scene.fog.color.setHex(0x87ceeb);
-    }
-
-    // Camera tracking
+    // Camera
     if (params.camMode === 'TRACKING') {
-      const offset = new THREE.Vector3(0, 5, -10);
-      offset.applyQuaternion(character.quaternion);
-      const targetPos = character.position.clone().add(offset);
-      camera.position.lerp(targetPos, 0.05);
-      camera.lookAt(character.position.clone().add(new THREE.Vector3(0, 1, 0)));
+      const offset = new THREE.Vector3(0, 6, -12).applyQuaternion(character.quaternion);
+      camera.position.lerp(character.position.clone().add(offset), 0.05);
+      camera.lookAt(character.position.clone().add(new THREE.Vector3(0, 1.5, 0)));
     }
   },
 
@@ -206,26 +255,109 @@ export const DemoStudioModule: SceneModule = {
   },
 
   UI: ({ ctx, onUpdate, engineAPI }) => {
+    const isOnline = !!process.env.API_KEY && process.env.API_KEY.length > 0;
+
+    const generateProp = async () => {
+        if (!ctx.params.prompt) return;
+        
+        ctx.params.isGenerating = true;
+        ctx.params.error = null;
+        onUpdate({...ctx});
+
+        try {
+            const code = await generateThreeJSScript(ctx.params.prompt);
+            
+            // Safe(r) execution of generated code
+            const createFunc = new Function('THREE', code);
+            const group = createFunc(THREE) as THREE.Group;
+            
+            if (group) {
+                // Find a spot near the character but not on top of them
+                const angle = ctx.animState.angle + (Math.random() * 0.5 + 0.5); // Ahead of character
+                const r = 12 + (Math.random() * 4 - 2); 
+                const x = Math.sin(angle) * r;
+                const z = Math.cos(angle) * r;
+                const y = ctx.terrain.getHeight(x, z);
+                
+                group.position.set(x, y, z);
+                // Random Y Rotation
+                group.rotation.y = Math.random() * Math.PI * 2;
+
+                group.traverse((c) => { 
+                    if (c instanceof THREE.Mesh) {
+                        c.castShadow = true; 
+                        c.receiveShadow = true;
+                    }
+                });
+                
+                ctx.scene.add(group);
+                ctx.objects.push(group);
+            }
+        } catch (e: any) {
+            console.error(e);
+            ctx.params.error = "Failed to generate: " + e.message;
+        } finally {
+            ctx.params.isGenerating = false;
+            onUpdate({...ctx});
+        }
+    };
+
+    const clearProps = () => {
+        ctx.objects.forEach((o: THREE.Object3D) => ctx.scene.remove(o));
+        ctx.objects = [];
+        onUpdate({...ctx});
+    };
+
     return (
       <div className="module-ui">
-        <div className="panel-header">STUDIO CONTROLS</div>
+        <div className="panel-header">
+            GENAI STUDIO {isOnline ? '(ONLINE)' : '(OFFLINE)'}
+        </div>
         
         <div className="control-row">
-          <label>ACTION</label>
-          <div className="btn-group">
-            <button 
-              className={!ctx.params.isPlaying ? 'active' : ''} 
-              onClick={() => { ctx.params.isPlaying = false; onUpdate({...ctx}); }}
-            >CUT</button>
-            <button 
-              className={ctx.params.isPlaying ? 'active' : ''} 
-              onClick={() => { ctx.params.isPlaying = true; onUpdate({...ctx}); }}
-            >ACTION</button>
-          </div>
+            <label>GENERATE PROP</label>
+            <div style={{display: 'flex', flexDirection: 'column', gap: '5px'}}>
+                <textarea 
+                    rows={2}
+                    style={{
+                        background: '#222', 
+                        border: '1px solid #444', 
+                        color: 'white', 
+                        padding: '5px',
+                        fontSize: '11px',
+                        resize: 'none',
+                        fontFamily: 'monospace',
+                        opacity: isOnline ? 1 : 0.5
+                    }}
+                    value={ctx.params.prompt}
+                    onChange={(e) => { ctx.params.prompt = e.target.value; onUpdate({...ctx}); }}
+                    placeholder={isOnline ? "Describe a 3D object..." : "API Key Required for GenAI"}
+                    disabled={!isOnline}
+                />
+                <button 
+                    className="action-btn"
+                    disabled={ctx.params.isGenerating || !isOnline}
+                    onClick={generateProp}
+                    style={{opacity: isOnline ? 1 : 0.5}}
+                >
+                    {ctx.params.isGenerating ? 'GENERATING CODE...' : 'GENERATE ASSET'}
+                </button>
+                {ctx.params.error && (
+                    <div style={{color: '#ff4444', fontSize: '10px'}}>{ctx.params.error}</div>
+                )}
+            </div>
         </div>
 
         <div className="control-row">
-          <label>CAMERA RIG</label>
+            <div className="btn-group">
+                 <button onClick={clearProps}>CLEAR AI ASSETS ({ctx.objects.length})</button>
+            </div>
+        </div>
+
+        <div className="panel-header" style={{marginTop: '20px'}}>SCENE CONTROLS</div>
+        
+        <div className="control-row">
+          <label>CAMERA</label>
           <div className="btn-group">
             <button 
               className={ctx.params.camMode === 'TRACKING' ? 'active' : ''} 
@@ -239,7 +371,7 @@ export const DemoStudioModule: SceneModule = {
         </div>
 
         <div className="control-row">
-          <label>TIME OF DAY: {ctx.params.timeOfDay}%</label>
+          <label>TIME: {ctx.params.timeOfDay}%</label>
           <input 
             type="range" 
             min="0" 
