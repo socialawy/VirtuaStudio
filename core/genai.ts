@@ -5,9 +5,16 @@
 
 import { GoogleGenAI } from "@google/genai";
 
-// Initialize Gemini Client
+// Initialize Gemini Client lazily
 // Note: process.env.API_KEY is injected by the build environment/runtime
-export const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+let ai: GoogleGenAI | null = null;
+
+const getAI = () => {
+  if (!ai && process.env.API_KEY) {
+    ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+  }
+  return ai;
+};
 
 /**
  * Generates an executable Three.js script to create a 3D object based on a prompt.
@@ -40,7 +47,12 @@ export async function generateThreeJSScript(prompt: string): Promise<string> {
   `;
 
   try {
-    const response = await ai.models.generateContent({
+    const aiClient = getAI();
+    if (!aiClient) {
+      throw new Error("API key not available");
+    }
+    
+    const response = await aiClient.models.generateContent({
       model: modelId,
       contents: prompt,
       config: {
