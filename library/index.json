@@ -1,0 +1,33 @@
+{
+  "version": "1.0",
+  "modules": [
+    {
+      "id": "AOB_VOID_V1",
+      "file": "./modules/aob-void.tsx",
+      "name": "AOB Production (Seq 01)",
+      "tags": ["production", "AOB"],
+      "type": "PRODUCTION"
+    },
+    {
+      "id": "CITY_FLYOVER_V1",
+      "file": "./modules/city-flyover.tsx",
+      "name": "City Flyover",
+      "tags": ["city", "night", "hdri", "instanced"],
+      "type": "PLAYGROUND"
+    },
+    {
+      "id": "DEMO_STUDIO_V1",
+      "file": "./modules/demo-studio.tsx",
+      "name": "VirtuaStudio GenAI",
+      "tags": ["demo", "character", "genai", "cinematic"],
+      "type": "PLAYGROUND"
+    },
+    {
+      "id": "OCEAN_SUNSET_V1",
+      "file": "./modules/ocean-sunset.tsx",
+      "name": "Ocean Sunset",
+      "tags": ["water", "sunset", "shader", "calm"],
+      "type": "PLAYGROUND"
+    }
+  ]
+}

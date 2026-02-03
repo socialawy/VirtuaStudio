@@ -1,0 +1,6 @@
+{
+  "name": "VirtuaStudio Pro",
+  "description": "A web-based Virtual Production Engine prototype featuring dynamic lighting, procedural sets, and cinematic camera controls.",
+  "requestFramePermissions": [],
+  "prompt": ""
+}
