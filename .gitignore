@@ -27,3 +27,7 @@ dist-ssr
 plan-dtls.md
 ps-perf-test.txt
 public/TEMPLATES/
+
+# Node
+node_modules/
+.env
