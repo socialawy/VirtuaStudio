@@ -11,6 +11,7 @@ import { AOBVoidModule } from './aob-void';
 import { DemoStudioModule } from './demo-studio';
 import { OceanSunsetModule } from './ocean-sunset';
 import { CityFlyoverModule } from './city-flyover';
+import { TeaserPlateModule } from './teaser-plate';
 
 // ============================================================================
 // MODULE REGISTRY
@@ -21,6 +22,7 @@ export const MODULE_REGISTRY: Record<string, SceneModule> = {
   [DemoStudioModule.id]: DemoStudioModule,
   [OceanSunsetModule.id]: OceanSunsetModule,
   [CityFlyoverModule.id]: CityFlyoverModule,
+  [TeaserPlateModule.id]: TeaserPlateModule,
 };
 
 // ============================================================================
@@ -51,3 +53,4 @@ export { AOBVoidModule } from './aob-void';
 export { DemoStudioModule } from './demo-studio';
 export { OceanSunsetModule } from './ocean-sunset';
 export { CityFlyoverModule } from './city-flyover';
+export { TeaserPlateModule } from './teaser-plate';

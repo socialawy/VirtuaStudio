@@ -9,12 +9,13 @@ console.log('=== VirtuaStudio Engine Checks ===\n');
 // ============================================================================
 console.log('1. Registry Integrity');
 const allModules = listModules();
-const EXPECTED_COUNT = 4;
+const EXPECTED_COUNT = 5;
 const EXPECTED_IDS = [
     'AOB_VOID_V1',
     'DEMO_STUDIO_V1',
     'OCEAN_SUNSET_V1',
-    'CITY_FLYOVER_V1'
+    'CITY_FLYOVER_V1',
+    'TEASER_PLATE_V1'
 ];
 
 console.log(`   Count: ${allModules.length} (Expected: ${EXPECTED_COUNT})`);
@@ -29,16 +30,16 @@ if (allModules.length === EXPECTED_COUNT && missingModules.length === 0) {
 console.log('');
 
 // ============================================================================
-// CHECK 2: MODULE CATEGORIES
+// CHECK 2: MODULE Categories
 // ============================================================================
 console.log('2. Module Categories');
 const playground = listModulesByType('PLAYGROUND');
 const production = listModulesByType('PRODUCTION');
 
-console.log(`   Playground: ${playground.length} (Expected 3)`);
+console.log(`   Playground: ${playground.length} (Expected 4)`);
 console.log(`   Production: ${production.length} (Expected 1)`);
 
-if (playground.length === 3 && production.length === 1) {
+if (playground.length === 4 && production.length === 1) {
     console.log(`   ✓ Category distribution correct`);
 } else {
     console.log(`   ✗ Category count mismatch`);
