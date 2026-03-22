@@ -28,6 +28,13 @@
       "name": "Ocean Sunset",
       "tags": ["water", "sunset", "shader", "calm"],
       "type": "PLAYGROUND"
+    },
+    {
+      "id": "TEASER_PLATE_V1",
+      "file": "./modules/teaser-plate.tsx",
+      "name": "Teaser Plate",
+      "tags": ["teaser", "presentation", "showcase"],
+      "type": "PLAYGROUND"
     }
   ]
 }
