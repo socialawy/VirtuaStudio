@@ -1,0 +1,57 @@
+name: Jules Issue Worker
+
+on:
+  issues:
+    types: [opened, labeled]
+  schedule:
+    - cron: '0 4 * * *' # Daily at 4 AM UTC
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: write
+  issues: write
+
+jobs:
+  jules-work:
+    runs-on: ubuntu-latest
+    if: >
+      github.event_name == 'schedule' ||
+      github.event_name == 'workflow_dispatch' ||
+      (github.event_name == 'issues' && !contains(github.event.issue.labels.*.name, 'needs-human-review'))
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Invoke Jules
+        uses: google-labs-code/jules-invoke@main
+        with:
+          jules_api_key: ${{ secrets.JULES_API_KEY }}
+          prompt: |
+            You are working on VirtuaStudio, a web-based Virtual Production Engine.
+            Tech stack: React 18, Three.js r182, @react-three/fiber, @react-three/drei, Vite 6, TypeScript 5.8, @google/genai (Gemini).
+
+            Architecture:
+            - core/types.ts — SceneModule interface definition (init/update/dispose lifecycle)
+            - core/genai.ts — Gemini API wrapper (lazy init, generates Three.js code)
+            - modules/ — Scene modules: AOB Void (production), Demo Studio, Ocean Sunset, City Flyover, Teaser Plate
+            - modules/index.ts — MODULE_REGISTRY with helper functions
+            - modules/_template.tsx — Blueprint for new modules
+            - library/index.json — JSON registry mirror
+            - test-modules.ts — Module registry validation script
+
+            Check the open GitHub issues and pick the next unassigned one to work on.
+
+            For each issue:
+            1. Read the issue description and acceptance criteria carefully.
+            2. Implement the feature or fix described.
+            3. If adding a new module, follow modules/_template.tsx and register in modules/index.ts + library/index.json.
+            4. Ensure npx tsc --noEmit passes.
+            5. Ensure npx tsx test-modules.ts passes (update expected counts if adding modules).
+            6. Create a clean PR referencing the issue number (e.g. "Closes #N").
+
+            Do NOT modify .github/workflows/ files.
+            Do NOT change unrelated code.
+            Every module must implement the full SceneModule interface (init, update, dispose).
+            Keep PRs focused — one issue per PR.

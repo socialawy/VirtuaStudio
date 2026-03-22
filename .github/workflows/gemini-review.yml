@@ -1,0 +1,165 @@
+name: Gemini PR Review & Auto-Merge
+
+on:
+  pull_request:
+    types: [opened, reopened, synchronize, ready_for_review]
+
+permissions:
+  contents: write
+  pull-requests: write
+  issues: write
+
+jobs:
+  gemini-review:
+    runs-on: ubuntu-latest
+    if: "!github.event.pull_request.draft"
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Get PR diff
+        run: |
+          gh pr diff ${{ github.event.pull_request.number }} > /tmp/pr_diff.txt
+          head -c 100000 /tmp/pr_diff.txt > /tmp/pr_diff_trimmed.txt
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Gemini Review
+        id: review
+        run: |
+          PR_BODY=$(gh pr view ${{ github.event.pull_request.number }} --json body -q '.body' || echo "No description")
+
+          cat > /tmp/prompt.txt <<PROMPTEOF
+          You are a senior engineer reviewing code for VirtuaStudio, a web-based Virtual Production Engine using React 18 + Three.js r182 + @react-three/fiber + @react-three/drei + Vite 6 + TypeScript 5.8 + @google/genai.
+
+          Architecture:
+          - core/types.ts — SceneModule interface (id, name, type, init/update/dispose lifecycle, UI component, deliverables, shots)
+          - core/genai.ts — Gemini API wrapper for generating Three.js code
+          - modules/ — Scene modules implementing SceneModule interface (AOB Void, Demo Studio, Ocean Sunset, City Flyover, Teaser Plate)
+          - modules/index.ts — MODULE_REGISTRY with getModule/listModules/listModulesByTag/listModulesByType helpers
+
+          READ THE DIFF LINE BY LINE. For each changed file, check:
+          1. BUGS: null/undefined access, off-by-one errors, race conditions
+          2. THREE.JS MEMORY: geometry.dispose(), material.dispose(), texture.dispose() in module dispose() — missing disposal = GPU memory leak
+          3. SCENE LIFECYCLE: init() must return ModuleContext, update() must not create new objects per frame, dispose() must clean up everything
+          4. REACT THREE FIBER: useFrame hooks, useThree refs, proper cleanup in useEffect returns
+          5. TYPE SAFETY: SceneModule interface compliance, any casts, missing null checks
+          6. GENAI: prompt injection risk in user inputs to generateThreeJSScript(), eval/Function usage safety
+          7. WEBGL STATE: renderer state pollution between modules, shared scene/camera conflicts
+          8. SECURITY: XSS, unsanitized user input, exposed API keys
+
+          ISSUES MUST reference the specific file and what is wrong. Not vague observations.
+          Bad: "Consider disposing resources" — Good: "ocean-sunset.tsx: waterMaterial created in init() is never disposed in dispose(), leaking the ShaderMaterial and its uniforms"
+
+          Decision rules:
+          - APPROVE: You read the diff, found no bugs or logic errors. Minor style preferences are NOT grounds for REQUEST_CHANGES.
+          - REQUEST_CHANGES: You found actual bugs, type errors, memory leaks, or logic errors. Each issue must cite file + what is wrong.
+          - ESCALATE: Breaking changes to SceneModule interface, GenAI prompt changes, or you cannot determine correctness from the diff alone.
+          - Dependabot/deps PRs: APPROVE if only version bumps in package.json/lockfile with no breaking major version changes.
+
+          Return JSON with keys: decision, summary, issues (array of specific findings with file references), risk_level, escalation_reason.
+
+          PR: ${{ github.event.pull_request.title }}
+          Author: ${{ github.event.pull_request.user.login }}
+          Changed: ${{ github.event.pull_request.changed_files }} files (+${{ github.event.pull_request.additions }} -${{ github.event.pull_request.deletions }})
+          Description: ${PR_BODY}
+
+          Diff:
+          PROMPTEOF
+
+          cat /tmp/pr_diff_trimmed.txt >> /tmp/prompt.txt
+
+          # Build payload with responseMimeType to force pure JSON (no code blocks)
+          jq -n --rawfile prompt /tmp/prompt.txt '{
+            "contents": [{"parts": [{"text": $prompt}]}],
+            "generationConfig": {
+              "temperature": 0.1,
+              "maxOutputTokens": 4096,
+              "responseMimeType": "application/json"
+            }
+          }' > /tmp/payload.json
+
+          HTTP_CODE=$(curl -s -w "%{http_code}" -o /tmp/gemini_response.json \
+            "https://generativelanguage.googleapis.com/v1beta/models/gemini-3.1-pro-preview:generateContent?key=${GEMINI_API_KEY}" \
+            -H 'Content-Type: application/json' \
+            -d @/tmp/payload.json)
+
+          echo "Gemini API HTTP status: $HTTP_CODE"
+
+          if [ "$HTTP_CODE" != "200" ]; then
+            echo "decision=ESCALATE" >> "$GITHUB_OUTPUT"
+            echo "⚠️ **Gemini Review: ESCALATE** — API error (HTTP $HTTP_CODE)" > /tmp/review_comment.txt
+            exit 0
+          fi
+
+          # Extract review JSON to file (never store JSON in bash variables)
+          jq -r '.candidates[0].content.parts[0].text // "{}"' /tmp/gemini_response.json > /tmp/review.json
+          echo "Review JSON:"
+          cat /tmp/review.json
+
+          # Parse fields directly from file (set +e so truncated JSON doesn't kill the run)
+          set +e
+          DECISION=$(jq -r '.decision // "ESCALATE"' /tmp/review.json 2>/dev/null || echo "ESCALATE")
+          SUMMARY=$(jq -r '.summary // "Review parsing failed"' /tmp/review.json 2>/dev/null || echo "Review parsing failed")
+          RISK=$(jq -r '.risk_level // "unknown"' /tmp/review.json 2>/dev/null || echo "unknown")
+          ISSUES=$(jq -r 'if .issues and (.issues | length > 0) then (.issues | map("- " + .) | join("\n")) else "" end' /tmp/review.json 2>/dev/null || echo "")
+          ESCALATION=$(jq -r '.escalation_reason // ""' /tmp/review.json 2>/dev/null || echo "")
+          set -e
+
+          echo "decision=$DECISION" >> "$GITHUB_OUTPUT"
+
+          if [ "$DECISION" = "APPROVE" ]; then ICON="✅";
+          elif [ "$DECISION" = "REQUEST_CHANGES" ]; then ICON="🔧";
+          else ICON="⚠️"; fi
+
+          {
+            echo "${ICON} **Gemini Review: ${DECISION}** (Risk: ${RISK})"
+            echo ""
+            echo "${SUMMARY}"
+            if [ -n "$ISSUES" ]; then
+              echo ""
+              echo "**Issues:**"
+              echo "${ISSUES}"
+            fi
+            if [ -n "$ESCALATION" ] && [ "$ESCALATION" != "null" ]; then
+              echo ""
+              echo "**Escalation reason:** ${ESCALATION}"
+            fi
+            echo ""
+            echo "---"
+            echo "*Automated review by Gemini 3.1 Pro*"
+          } > /tmp/review_comment.txt
+
+        env:
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Post review comment
+        run: gh pr comment ${{ github.event.pull_request.number }} --body-file /tmp/review_comment.txt
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Approve & merge if APPROVE
+        if: steps.review.outputs.decision == 'APPROVE'
+        run: |
+          gh pr review ${{ github.event.pull_request.number }} --approve --body "Auto-approved by Gemini review"
+          gh pr merge ${{ github.event.pull_request.number }} --squash --auto
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Request changes if needed
+        if: steps.review.outputs.decision == 'REQUEST_CHANGES'
+        run: gh pr review ${{ github.event.pull_request.number }} --request-changes --body "Changes requested by Gemini review — see comment above"
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Escalate if needed
+        if: steps.review.outputs.decision == 'ESCALATE'
+        run: |
+          gh pr comment ${{ github.event.pull_request.number }} --body "🚨 **Escalation:** This PR needs human review. @socialawy please check."
+          gh pr edit ${{ github.event.pull_request.number }} --add-label "needs-human-review" 2>/dev/null || true
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
