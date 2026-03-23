@@ -24,6 +24,7 @@ const VirtualStudio: React.FC = () => {
   const [activeModule, setActiveModule] = useState<SceneModule | null>(null);
   const [moduleContext, setModuleContext] = useState<any>(null);
   const [isRecording, setIsRecording] = useState(false);
+  const [showHelp, setShowHelp] = useState(false);
   
   // Engine refs
   const mountRef = useRef<HTMLDivElement>(null);
@@ -92,9 +93,7 @@ const VirtualStudio: React.FC = () => {
   // MODULE LOADING
   // ============================================================================
 
-  const loadModule = (module: SceneModule) => {
-    if (!sceneRef.current || !cameraRef.current || !rendererRef.current) return;
-    
+  const unloadModule = () => {
     // 1. Synchronously block the render loop from accessing the old context
     contextRef.current = null;
 
@@ -108,16 +107,68 @@ const VirtualStudio: React.FC = () => {
     }
     
     // 3. Reset Engine State
-    sceneRef.current.clear();
-    sceneRef.current.background = new THREE.Color(0x000000);
-    sceneRef.current.fog = null;
-    sceneRef.current.environment = null;
+    if (sceneRef.current) {
+      sceneRef.current.clear();
+      sceneRef.current.background = new THREE.Color(0x000000);
+      sceneRef.current.fog = null;
+      sceneRef.current.environment = null;
+    }
+
+    setModuleContext(null);
+    setActiveModule(null);
+  };
+
+  const loadModule = (module: SceneModule) => {
+    if (!sceneRef.current || !cameraRef.current || !rendererRef.current) return;
+
+    unloadModule();
 
     // 4. Initialize new module
     const ctx = module.init(sceneRef.current, cameraRef.current, rendererRef.current);
     setModuleContext(ctx);
     setActiveModule(module);
   };
+
+  // ============================================================================
+  // KEYBOARD SHORTCUTS
+  // ============================================================================
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      // Guard against inputs/textareas
+      const target = e.target as HTMLElement;
+      if (
+        target.tagName === 'INPUT' ||
+        target.tagName === 'TEXTAREA' ||
+        target.isContentEditable
+      ) {
+        return;
+      }
+
+      if (e.key === 'Escape') {
+        if (showHelp) {
+          setShowHelp(false);
+          return;
+        }
+        unloadModule();
+      }
+
+      if (e.key === '?') {
+        setShowHelp(prev => !prev);
+      }
+
+      const num = parseInt(e.key, 10);
+      if (!isNaN(num) && num > 0) {
+        const modules = listModules();
+        if (num <= modules.length) {
+          loadModule(modules[num - 1]);
+        }
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [showHelp, loadModule, listModules]);
 
   // ============================================================================
   // ENGINE SETUP
@@ -261,16 +312,42 @@ const VirtualStudio: React.FC = () => {
           <h2>SELECT MODULE</h2>
           <p>Load a scene module to initialize the engine.</p>
           <div className="cards">
-            {listModules().map(m => (
+            {listModules().map((m, idx) => (
               <div 
                 key={m.id} 
                 className={`card ${m.type === 'PRODUCTION' ? 'prod' : ''}`} 
                 onClick={() => loadModule(m)}
               >
+                <div className="shortcut-badge">[{idx + 1}]</div>
                 <h3>{m.name}</h3>
                 <p>{m.description}</p>
               </div>
             ))}
+          </div>
+        </div>
+      )}
+
+      {showHelp && (
+        <div className="help-overlay" onClick={() => setShowHelp(false)}>
+          <div className="help-modal" onClick={e => e.stopPropagation()}>
+            <div className="help-header">
+              <h3>Keyboard Shortcuts</h3>
+              <button onClick={() => setShowHelp(false)}>×</button>
+            </div>
+            <div className="help-content">
+              <div className="help-row">
+                <span className="key">1-{listModules().length}</span>
+                <span className="desc">Switch to module</span>
+              </div>
+              <div className="help-row">
+                <span className="key">Esc</span>
+                <span className="desc">Return to module selection</span>
+              </div>
+              <div className="help-row">
+                <span className="key">?</span>
+                <span className="desc">Toggle this help menu</span>
+              </div>
+            </div>
           </div>
         </div>
       )}
