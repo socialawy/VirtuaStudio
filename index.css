@@ -1,3 +1,25 @@
+:root {
+  --bg-primary: #050505;
+  --bg-secondary: #111;
+  --text-primary: #fff;
+  --text-secondary: #aaa;
+  --card-bg: #222;
+  --card-border: #333;
+  --accent: #007acc;
+  --accent-hover: #0099ff;
+}
+
+[data-theme="light"] {
+  --bg-primary: #f0f0f0;
+  --bg-secondary: #e0e0e0;
+  --text-primary: #111;
+  --text-secondary: #444;
+  --card-bg: #fff;
+  --card-border: #ccc;
+  --accent: #0066cc;
+  --accent-hover: #0055aa;
+}
+
 html, body, #root {
   width: 100%;
   height: 100%;
@@ -18,7 +40,7 @@ canvas {
 .engine-container { 
     width: 100vw; 
     height: 100vh; 
-    background: #000; 
+    background: var(--bg-primary);
     position: relative; 
     font-family: 'Segoe UI', sans-serif; 
     overflow: hidden; 
@@ -39,13 +61,13 @@ canvas {
     left: 0; 
     right: 0; 
     height: 50px; 
-    background: #111; 
-    border-bottom: 1px solid #333; 
+    background: var(--bg-secondary);
+    border-bottom: 1px solid var(--card-border);
     display: flex; 
     align-items: center; 
     justify-content: space-between; 
     padding: 0 20px; 
-    color: #fff; 
+    color: var(--text-primary);
     z-index: 10; 
 }
 
@@ -61,9 +83,9 @@ canvas {
 }
 
 .project-switcher button { 
-    background: #222; 
-    border: 1px solid #444; 
-    color: #ccc; 
+    background: var(--card-bg);
+    border: 1px solid var(--card-border);
+    color: var(--text-secondary);
     padding: 5px 15px; 
     cursor: pointer; 
     border-radius: 4px; 
@@ -71,9 +93,9 @@ canvas {
 }
 
 .project-switcher button.active { 
-    background: #007acc; 
-    border-color: #0099ff; 
-    color: white; 
+    background: var(--accent);
+    border-color: var(--accent-hover);
+    color: #fff;
 }
 
 .module-ui { 
@@ -81,21 +103,22 @@ canvas {
     top: 70px; 
     right: 20px; 
     width: 350px; 
-    background: rgba(15, 15, 20, 0.9); 
+    background: var(--bg-secondary);
+    opacity: 0.95;
     backdrop-filter: blur(10px); 
-    border: 1px solid #333; 
+    border: 1px solid var(--card-border);
     border-radius: 8px; 
     padding: 15px; 
-    color: #eee; 
+    color: var(--text-primary);
     z-index: 20; 
 }
 
 .panel-header { 
     font-size: 12px; 
     font-weight: bold; 
-    color: #666; 
+    color: var(--text-secondary);
     margin-bottom: 15px; 
-    border-bottom: 1px solid #333; 
+    border-bottom: 1px solid var(--card-border);
     padding-bottom: 5px; 
 }
 
@@ -106,7 +129,7 @@ canvas {
 .control-row label { 
     display: block; 
     font-size: 11px; 
-    color: #aaa; 
+    color: var(--text-secondary);
     margin-bottom: 5px; 
 }
 
@@ -118,17 +141,17 @@ canvas {
 .btn-group button { 
     flex: 1; 
     padding: 6px; 
-    background: #333; 
-    border: 1px solid #444; 
-    color: #aaa; 
+    background: var(--card-bg);
+    border: 1px solid var(--card-border);
+    color: var(--text-secondary);
     cursor: pointer; 
     border-radius: 4px; 
     font-size: 10px; 
 }
 
 .btn-group button.active { 
-    background: #007acc; 
-    color: white; 
+    background: var(--accent);
+    color: #fff;
 }
 
 .landing-screen { 
@@ -137,12 +160,12 @@ canvas {
     left: 0; 
     width: 100%; 
     height: 100%; 
-    background: #050505; 
+    background: var(--bg-primary);
     display: flex; 
     flex-direction: column; 
     align-items: center; 
     justify-content: center; 
-    color: white; 
+    color: var(--text-primary);
     z-index: 5; 
 }
 
@@ -153,11 +176,11 @@ canvas {
 }
 
 .card { 
-    background: #222; 
+    background: var(--card-bg);
     width: 200px; 
     padding: 30px; 
     border-radius: 8px; 
-    border: 1px solid #333; 
+    border: 1px solid var(--card-border);
     cursor: pointer; 
     transition: all 0.2s; 
     text-align: center; 
@@ -165,11 +188,11 @@ canvas {
 
 .card:hover { 
     transform: translateY(-5px); 
-    border-color: #666; 
+    border-color: var(--text-secondary);
 }
 
 .card.prod { 
-    border-top: 3px solid #007acc; 
+    border-top: 3px solid var(--accent);
 }
 
 .production-ui .shot-list { 
@@ -181,7 +204,7 @@ canvas {
     display: flex; 
     justify-content: space-between; 
     align-items: center; 
-    background: #222; 
+    background: var(--card-bg);
     margin-bottom: 5px; 
     padding: 8px; 
     border-left: 3px solid transparent; 
@@ -189,8 +212,8 @@ canvas {
 }
 
 .shot-row.active { 
-    border-left-color: #007acc; 
-    background: #2a2a35; 
+    border-left-color: var(--accent);
+    background: var(--bg-secondary);
 }
 
 .shot-meta { 
@@ -200,18 +223,18 @@ canvas {
 
 .shot-meta .id { 
     font-weight: bold; 
-    color: #007acc; 
+    color: var(--accent);
 }
 
 .shot-meta .desc { 
-    color: #888; 
+    color: var(--text-secondary);
 }
 
 .shot-row button { 
     padding: 4px 10px; 
-    background: #333; 
+    background: var(--card-bg);
     border: none; 
-    color: white; 
+    color: var(--text-primary);
     cursor: pointer; 
     font-size: 10px; 
 }
@@ -224,20 +247,20 @@ canvas {
 .pipeline-status { 
     margin-top: 15px; 
     padding-top: 15px; 
-    border-top: 1px solid #333; 
+    border-top: 1px solid var(--card-border);
 }
 
 .progress-track { 
     width: 100%; 
     height: 4px; 
-    background: #222; 
+    background: var(--card-bg);
     margin-bottom: 10px; 
     border-radius: 2px; 
 }
 
 .progress-fill { 
     height: 100%; 
-    background: #007acc; 
+    background: var(--accent);
     border-radius: 2px; 
     transition: width 0.1s; 
 }
@@ -245,9 +268,9 @@ canvas {
 .action-btn { 
     width: 100%; 
     padding: 10px; 
-    background: #007acc; 
+    background: var(--accent);
     border: none; 
-    color: white; 
+    color: #fff;
     font-weight: bold; 
     cursor: pointer; 
     border-radius: 4px; 
@@ -259,8 +282,8 @@ canvas {
 }
 
 .action-btn:disabled { 
-    background: #444; 
-    color: #888; 
+    background: var(--card-border);
+    color: var(--text-secondary);
 }
 
 /* Keyboard Shortcuts Styles */
@@ -269,11 +292,11 @@ canvas {
     top: 10px;
     right: 10px;
     background: rgba(0, 0, 0, 0.5);
-    color: #aaa;
+    color: var(--text-secondary);
     font-size: 10px;
     padding: 2px 6px;
     border-radius: 4px;
-    border: 1px solid #444;
+    border: 1px solid var(--card-border);
 }
 
 .card {
@@ -295,12 +318,12 @@ canvas {
 }
 
 .help-modal {
-    background: #1a1a24;
-    border: 1px solid #333;
+    background: var(--bg-secondary);
+    border: 1px solid var(--card-border);
     border-radius: 8px;
     width: 400px;
     padding: 20px;
-    color: #eee;
+    color: var(--text-primary);
     box-shadow: 0 10px 30px rgba(0,0,0,0.5);
 }
 
@@ -309,7 +332,7 @@ canvas {
     justify-content: space-between;
     align-items: center;
     margin-bottom: 20px;
-    border-bottom: 1px solid #333;
+    border-bottom: 1px solid var(--card-border);
     padding-bottom: 10px;
 }
 
@@ -321,13 +344,13 @@ canvas {
 .help-header button {
     background: none;
     border: none;
-    color: #aaa;
+    color: var(--text-secondary);
     font-size: 20px;
     cursor: pointer;
 }
 
 .help-header button:hover {
-    color: white;
+    color: var(--text-primary);
 }
 
 .help-row {
@@ -341,13 +364,13 @@ canvas {
 }
 
 .help-row .key {
-    background: #333;
+    background: var(--card-bg);
     padding: 4px 10px;
     border-radius: 4px;
-    border: 1px solid #555;
+    border: 1px solid var(--card-border);
     font-family: monospace;
     font-size: 14px;
-    color: #4da6ff;
+    color: var(--accent);
     min-width: 60px;
     text-align: center;
     margin-right: 15px;
@@ -355,5 +378,5 @@ canvas {
 
 .help-row .desc {
     font-size: 14px;
-    color: #ccc;
+    color: var(--text-secondary);
 }

@@ -5,6 +5,18 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>VirtuaStudio // AOB Engine</title>
     <link rel="stylesheet" href="index.css">
+    <script>
+      (function() {
+        const savedTheme = localStorage.getItem('virtua-theme');
+        if (savedTheme === 'dark' || savedTheme === 'light') {
+          document.documentElement.setAttribute('data-theme', savedTheme);
+        } else if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+          document.documentElement.setAttribute('data-theme', 'dark');
+        } else {
+          document.documentElement.setAttribute('data-theme', 'light');
+        }
+      })();
+    </script>
     <!-- REMOVE THE ENTIRE IMPORT MAP -->
 <script type="importmap">
 {

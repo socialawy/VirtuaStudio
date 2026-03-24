@@ -25,6 +25,7 @@ const VirtualStudio: React.FC = () => {
   const [moduleContext, setModuleContext] = useState<any>(null);
   const [isRecording, setIsRecording] = useState(false);
   const [showHelp, setShowHelp] = useState(false);
+  const [theme, setTheme] = useState<'dark' | 'light'>('dark');
   
   // Engine refs
   const mountRef = useRef<HTMLDivElement>(null);
@@ -171,6 +172,25 @@ const VirtualStudio: React.FC = () => {
   }, [showHelp, loadModule, listModules]);
 
   // ============================================================================
+  // THEME SETUP
+  // ============================================================================
+
+  useEffect(() => {
+    // Initialize theme state from the DOM, which was set by the blocking script
+    const currentTheme = document.documentElement.getAttribute('data-theme');
+    if (currentTheme === 'dark' || currentTheme === 'light') {
+      setTheme(currentTheme);
+    }
+  }, []);
+
+  const toggleTheme = () => {
+    const newTheme = theme === 'dark' ? 'light' : 'dark';
+    setTheme(newTheme);
+    document.documentElement.setAttribute('data-theme', newTheme);
+    localStorage.setItem('virtua-theme', newTheme);
+  };
+
+  // ============================================================================
   // ENGINE SETUP
   // ============================================================================
 
@@ -281,7 +301,10 @@ const VirtualStudio: React.FC = () => {
       
       <header className="engine-header">
         <div className="brand">VIRTUASTUDIO // ENGINE v2.0</div>
-        <div className="project-switcher">
+        <div className="project-switcher" style={{ alignItems: 'center' }}>
+          <button onClick={toggleTheme} style={{ padding: '5px 10px', marginRight: '10px' }}>
+            {theme === 'dark' ? '☀️' : '🌙'}
+          </button>
           {playgroundModules.map(m => (
             <button 
               key={m.id}
