@@ -53,9 +53,6 @@ Object.defineProperty(global, 'navigator', {
   writable: true
 });
 
-import * as THREE from 'three';
-import { listModules } from '../../modules/index';
-
 // Thresholds
 const THRESHOLD_INIT = 2000;
 const THRESHOLD_UPDATE_AVG = 16;
@@ -72,6 +69,9 @@ interface BenchmarkResult {
 }
 
 async function runBenchmarks() {
+  const THREE = await import('three');
+  const { listModules } = await import('../../modules/index');
+
   console.log('=== Running Module Performance Benchmarks ===\n');
   const modules = listModules();
   const results: BenchmarkResult[] = [];
