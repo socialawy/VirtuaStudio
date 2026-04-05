@@ -191,9 +191,26 @@ export const CityFlyoverModule: SceneModule = {
     dispose: (ctx) => {
         console.log('[CityFlyover] Disposing...');
         ctx.clock.stop();
-        ctx.mesh.geometry.dispose();
-        (ctx.mesh.material as THREE.Material).dispose();
-        ctx.scene.environment?.dispose();
+        ctx.scene.traverse((object) => {
+            if (!(object instanceof THREE.Mesh) && !(object instanceof THREE.InstancedMesh) && !(object instanceof THREE.Points)) return;
+            if (object.geometry) {
+                object.geometry.dispose();
+            }
+            if (object.material) {
+                if (Array.isArray(object.material)) {
+                    object.material.forEach((m) => m.dispose());
+                } else {
+                    object.material.dispose();
+                }
+            }
+        });
+        if (ctx.scene.environment) {
+            ctx.scene.environment.dispose();
+        }
+        if (ctx.scene.background instanceof THREE.Texture) {
+            ctx.scene.background.dispose();
+        }
+        ctx.scene.clear();
     },
 
     UI: ({ ctx, onUpdate }) => (
