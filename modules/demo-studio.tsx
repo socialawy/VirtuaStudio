@@ -251,6 +251,19 @@ export const DemoStudioModule: SceneModule = {
   },
 
   dispose: (ctx) => {
+    ctx.scene.traverse((object) => {
+      if (!(object instanceof THREE.Mesh) && !(object instanceof THREE.Points)) return;
+      if (object.geometry) {
+        object.geometry.dispose();
+      }
+      if (object.material) {
+        if (Array.isArray(object.material)) {
+          object.material.forEach((m) => m.dispose());
+        } else {
+          object.material.dispose();
+        }
+      }
+    });
     ctx.scene.clear();
   },
 
