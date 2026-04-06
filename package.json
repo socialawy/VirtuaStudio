@@ -21,7 +21,7 @@
     "three": "^0.183.2"
   },
   "devDependencies": {
-    "@types/node": "^25.5.0",
+    "@types/node": "^25.5.2",
     "@vitejs/plugin-react": "^5.0.0",
     "@vitest/ui": "^4.1.1",
     "eslint": "^10.1.0",
