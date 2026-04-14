@@ -13,7 +13,7 @@
     "test:bench": "vitest run tests/performance/benchmark.test.ts --config vitest.bench.config.ts"
   },
   "dependencies": {
-    "@google/genai": "^1.39.0",
+    "@google/genai": "^1.49.0",
     "@react-three/drei": "9.122.0",
     "@react-three/fiber": "^8.15.0",
     "react": "^18.2.0",
