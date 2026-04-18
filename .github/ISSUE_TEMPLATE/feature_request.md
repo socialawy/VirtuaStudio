@@ -29,7 +29,7 @@ Describe the implementation approach.
 - [ ] Criterion 1
 - [ ] Criterion 2
 - [ ] npx tsc --noEmit passes
-- [ ] npx tsx test-modules.ts passes
+- [ ] npm run test:run passes
 
 ## Alternatives Considered
 Other approaches you considered and why you rejected them.
