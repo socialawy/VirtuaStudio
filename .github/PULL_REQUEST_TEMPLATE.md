@@ -21,7 +21,7 @@ Brief description of changes.
 
 ## Checklist
 - [ ] `npx tsc --noEmit` passes
-- [ ] `npx tsx test-modules.ts` passes
+- [ ] `npm run test` passes
 - [ ] New modules implement full SceneModule interface (init, update, dispose)
 - [ ] Three.js resources properly disposed (geometry, material, texture)
 - [ ] No console errors in browser
