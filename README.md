@@ -34,7 +34,7 @@ VirtuaStudio is a lightweight, browser-based virtual production engine designed 
 
 4. **Run System Checks**
    ```bash
-   npx tsx test-modules.ts
+   npm run test
    ```
 
 ## 📦 Active Modules
@@ -147,14 +147,14 @@ The AOB Production module supports automated batch exporting:
 
 Run the module integrity suite to verify registry status and type safety:
 ```bash
-npx tsx test-modules.ts
+npm run test
 ```
 ## Final Project Status
 
 ### System Status
 [x] Core Types: Defined and exported
 [x] Module Registry: 4 active modules registered
-[x] Tests: `test-modules.ts` passes all checks
+[x] Tests: `npm run test` passes all checks
 [x] Documentation: README updated with setup and architecture
 [x] Repository: Fully functional GitHub repo with complete history
 
