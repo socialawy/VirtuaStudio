@@ -139,7 +139,7 @@ npx tsc --noEmit
 ### System Status
 [x] Core Types: Defined and exported
 [x] Module Registry: 4 active modules registered
-[x] Tests: `test-modules.ts` passes all checks
+[x] Tests: `npm run test` passes all checks
 [x] Documentation: README updated with setup and architecture
 
 ### Module Health
@@ -188,7 +188,7 @@ npx tsc --noEmit
 ### System Status
 [x] Core Types: Defined and exported
 [x] Module Registry: 4 active modules registered
-[x] Tests: `test-modules.ts` passes all checks
+[x] Tests: `npm run test` passes all checks
 [x] Documentation: README updated with setup and architecture
 [x] Repository: Fully functional GitHub repo with complete history
 
