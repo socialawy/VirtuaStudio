@@ -137,7 +137,7 @@ export const CityFlyoverModule: SceneModule = {
             scene,
             camera,
             mesh,
-            clock: new THREE.Clock(true), // Auto-start
+            clock: new THREE.Timer(), // Timer instead of Clock
             params: {
                 speed: 25,
                 flyHeight: 40,
@@ -152,8 +152,9 @@ export const CityFlyoverModule: SceneModule = {
     // === THIS IS NOW THE ONLY ANIMATION SOURCE ===
     update: (ctx, _time, _delta) => {
         // Use internal clock for reliable delta (engine may not pass it correctly)
+        ctx.clock.update();
         const delta = ctx.clock.getDelta();
-        const elapsed = ctx.clock.getElapsedTime();
+        const elapsed = ctx.clock.getElapsed();
 
         if (!ctx.params.isPlaying || delta <= 0 || delta > 0.5) return;
 
@@ -190,7 +191,7 @@ export const CityFlyoverModule: SceneModule = {
 
     dispose: (ctx) => {
         console.log('[CityFlyover] Disposing...');
-        ctx.clock.stop();
+        // THREE.Timer does not have a stop() method, it stops when update() is no longer called
         ctx.scene.traverse((object) => {
             if (!(object instanceof THREE.Mesh) && !(object instanceof THREE.InstancedMesh) && !(object instanceof THREE.Points)) return;
             if (object.geometry) {
