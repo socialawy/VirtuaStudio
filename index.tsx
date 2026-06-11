@@ -259,14 +259,15 @@ const VirtualStudio: React.FC = () => {
   useEffect(() => {
     if (!rendererRef.current || !sceneRef.current || !cameraRef.current) return;
     
-    const clock = new THREE.Clock();
+    const clock = new THREE.Timer();
     let running = true;
     
     const loop = () => {
       if (!running) return;
       requestAnimationFrame(loop);
       
-      const time = clock.getElapsedTime();
+      clock.update();
+      const time = clock.getElapsed();
       const delta = clock.getDelta();
       
       // Safety: Only update if we have a valid context for the CURRENT active module
