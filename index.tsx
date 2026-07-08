@@ -259,15 +259,16 @@ const VirtualStudio: React.FC = () => {
   useEffect(() => {
     if (!rendererRef.current || !sceneRef.current || !cameraRef.current) return;
     
-    const clock = new THREE.Clock();
+    const timer = new THREE.Timer();
     let running = true;
     
     const loop = () => {
       if (!running) return;
       requestAnimationFrame(loop);
       
-      const time = clock.getElapsedTime();
-      const delta = clock.getDelta();
+      timer.update();
+      const time = timer.getElapsed();
+      const delta = timer.getDelta();
       
       // Safety: Only update if we have a valid context for the CURRENT active module
       if (activeModule && contextRef.current) {
@@ -284,7 +285,10 @@ const VirtualStudio: React.FC = () => {
     };
     
     loop();
-    return () => { running = false; };
+    return () => {
+      running = false;
+      timer.dispose();
+    };
   }, [activeModule]);
 
   // ============================================================================
